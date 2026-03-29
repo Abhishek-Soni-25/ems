@@ -6,13 +6,15 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
+    "db:setup": "mysql -u root -p < schema.sql",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@supabase/supabase-js": "^2.100.1",
     "dotenv": "^17.3.1",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "mysql2": "^3.20.0",
+    "sequelize": "^6.37.8"
   }
 }
