@@ -50,6 +50,65 @@ paths:
           description: Internal Server Error,
           $ref: '#/components/responses/BadRequest'
 
+  /events/{id}/attendance:
+    post:
+      tags: [Events]
+      summary: Verify attendance using ticket code
+      description: Validates the ticket code for a specific event and returns number of tickets booked.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Event ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  example: "SXK24TNE"
+              required: [code]
+      responses:
+        '200':
+          description: Attendance verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tickets:
+                    type: integer
+                    example: 1
+
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Code is required
+
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid code
+
+        '500':
+          description: Internal Server Error,
+          $ref: '#/components/responses/BadRequest'
+
   /user/{id}/book_ticket:
     post:
       tags: [Bookings]

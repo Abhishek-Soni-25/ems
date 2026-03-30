@@ -39,3 +39,30 @@ export async function save_event(req, res) {
         res.status(500).json({message: "Internal Server Error"});
     }
 }
+
+export async function mark_attendance(req, res) {
+  try {
+    const event_id = req.params.id;
+    const { code } = req.body;
+
+    if (!code) {
+      return res.status(400).json({ message: "Code is required" });
+    }
+
+    const [rows] = await pool.execute(
+      `SELECT tickets FROM event_attendance 
+       WHERE event_id = ? AND unicode = ?`,
+      [event_id, code]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Invalid code" });
+    }
+
+    return res.status(200).json({tickets: rows[0].tickets});
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+}

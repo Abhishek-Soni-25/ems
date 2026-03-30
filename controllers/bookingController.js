@@ -33,9 +33,17 @@ export async function book_ticket(req, res) {
         const today = new Date()
         const isoDate = today.toISOString().split("T")[0];
 
+        const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+
         await connection.execute(
             "INSERT INTO bookings (user_id, event_id, booking_date) VALUES (?, ?, ?)",
             [user_id, event_id, isoDate]
+        );
+
+        await connection.execute(
+            `INSERT INTO event_attendance (user_id, event_id, unicode, tickets)
+            VALUES (?, ?, ?, ?)`,
+            [user_id, event_id, code, 1]
         );
 
         await connection.execute(
@@ -44,8 +52,6 @@ export async function book_ticket(req, res) {
         );
 
         await connection.commit();
-
-        const code = Math.random().toString(36).substring(2, 10).toUpperCase();
 
         return res.status(201).json({message: "Ticket booked successfully", code: code});
 

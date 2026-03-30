@@ -4,6 +4,7 @@ USE ems_db;
 
 -- Drop tables if exist
 DROP TABLE IF EXISTS bookings;
+DROP TABLE IF EXISTS event_attendance;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS events;
 
@@ -30,6 +31,17 @@ CREATE TABLE bookings (
     user_id INT NOT NULL,
     event_id INT NOT NULL,
     booking_date DATE,
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Event Attandance Table
+CREATE TABLE event_attendance (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    event_id INT NOT NULL,
+    unicode VARCHAR(20) NOT NULL,
+    tickets INT NOT NULL DEFAULT 1,
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
