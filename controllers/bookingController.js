@@ -1,6 +1,8 @@
-import supabase from "../config/supabase.js";
+import pool from "../config/db.js";
 
 export async function book_ticket(req, res) {
+    const connection = await pool.getConnection();
+
     try {
         const user_id = req.params.id;
         const { event_id } = req.body;
@@ -9,46 +11,49 @@ export async function book_ticket(req, res) {
             return res.status(400).json({message: "select the event"});
         }
 
-        const { data: event, error: eventError } = await supabase
-            .from("events")
-            .select()
-            .eq("id", event_id)
-            .single();
+        await connection.beginTransaction();
 
-        if (eventError) {
-            return res.status(404).json({message: "Event not found"});
+        const [events] = await connection.execute(
+            "SELECT * FROM events WHERE id = ? FOR UPDATE",
+            [event_id]
+        );
+
+        if (events.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ message: "Event not found" });
         }
 
+        const event = events[0]
+
         if (event.remaining_tickets <= 0) {
+            await connection.rollback()
             return res.status(400).json({message: "No tickets available"});
         }
 
-        const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-        
         const today = new Date()
         const isoDate = today.toISOString().split("T")[0];
 
-        const { error: bookingError } = await supabase
-            .from("bookings")
-            .insert({user_id: user_id, event_id: event_id, booking_date: isoDate})
+        await connection.execute(
+            "INSERT INTO bookings (user_id, event_id, booking_date) VALUES (?, ?, ?)",
+            [user_id, event_id, isoDate]
+        );
 
-        if (bookingError) {
-            return res.status(400).json({message: "Booking not saved"});
-        }
+        await connection.execute(
+            "UPDATE events SET remaining_tickets = remaining_tickets - 1 WHERE id = ?",
+            [event_id]
+        );
 
-        const { error: updateError } = await supabase
-            .from("events")
-            .update({remaining_tickets: event.remaining_tickets - 1})
-            .eq("id", event_id);
+        await connection.commit();
 
-        if (updateError) {
-            return res.status(400).json({message: "Updation failed"});
-        }
+        const code = Math.random().toString(36).substring(2, 10).toUpperCase();
 
         return res.status(201).json({message: "Ticket booked successfully", code: code});
 
     } catch (err) {
+        await connection.rollback();
         return res.status(500).json({message:"Internal Server Error"});
+    } finally{
+        connection.release();
     }
 }
 
@@ -56,16 +61,16 @@ export async function get_user_bookings(req, res) {
     try {
         const user_id = req.params.id;
 
-        const { data, error } = await supabase
-            .from("bookings")
-            .select()
-            .eq("user_id", user_id);
+        const [rows] = await pool.execute(
+            "SELECT * FROM bookings WHERE user_id = ?",
+            [user_id]
+        );
 
-        if (error) {
-            return res.status(400).json({message: "Failed to fetch bookings"});
-        }
+        rows.forEach(row => {
+            row.booking_date = row.booking_date.toISOString().split("T")[0];
+        });
 
-        return res.status(200).json(data);
+        return res.status(200).json(rows);
 
     } catch (err) {
         return res.status(500).json({message: "Internal Server Error"});
