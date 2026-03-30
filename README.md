@@ -4,6 +4,12 @@ A backend system to manage events, bookings, and attendance verification using u
 
 ---
 
+## Postman Collection
+
+https://winter-meadow-381506.postman.co/workspace/Team-Workspace~a01a90a0-4a8e-4cea-89a2-3cd5fd659071/collection/37052292-1852281a-cca0-4cb6-be49-09d1656cbc1a?action=share&creator=37052292
+
+---
+
 ## Hosted URL
 
 https://ems-psi-five.vercel.app/
