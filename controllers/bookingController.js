@@ -36,6 +36,10 @@ export async function book_ticket(req, res) {
             return res.status(400).json({message: "Booking not saved"});
         }
 
+        await supabase
+        .from("event_attendance")
+        .insert({user_id: user_id, event_id: event_id, unicode: code, tickets: 1})
+
         const { error: updateError } = await supabase
             .from("events")
             .update({remaining_tickets: event.remaining_tickets - 1})

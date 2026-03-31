@@ -45,3 +45,35 @@ export async function save_event(req, res) {
         res.status(500).json({message: "Internal Server Error"});
     }
 }
+
+export async function mark_attendance(req, res) {
+  try {
+    const event_id = req.params.id;
+    const { code } = req.body;
+
+    if (!code) {
+      return res.status(400).json({ message: "Code is required" });
+    }
+
+    const { data, error } = await supabase
+    .from("event_attendance")
+    .select("tickets")
+    .eq("event_id", event_id)
+    .eq("unicode", code)
+    .single()
+
+    if (error) {
+      return res.status(400).json({message: "Failed to fetch tickets"})
+    }
+
+    if (!data) {
+      return res.status(404).json({ message: "Invalid code" });
+    }
+
+    return res.status(200).json(data);
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+}
