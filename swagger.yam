@@ -1,0 +1,270 @@
+openapi: 3.0.3
+info:
+  title: Event Management System API
+  version: 1.0.0
+  description: API for browsing events and booking tickets.
+
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: Events
+  - name: Bookings
+
+paths:
+  /events:
+    get:
+      tags: [Events]
+      summary: List all upcoming events
+      responses:
+        '200':
+          description: Events fetched successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+        '500':
+          description: Internal Server Error,
+          $ref: '#/components/responses/BadRequest'
+                
+
+    post:
+      tags: [Events]
+      summary: Create a new event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreEventData'
+      responses:
+        '201':
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '500':
+          description: Internal Server Error,
+          $ref: '#/components/responses/BadRequest'
+
+  /events/{id}/attendance:
+    post:
+      tags: [Events]
+      summary: Verify attendance using ticket code
+      description: Validates the ticket code for a specific event and returns number of tickets booked.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Event ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  example: "SXK24TNE"
+              required: [code]
+      responses:
+        '200':
+          description: Attendance verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tickets:
+                    type: integer
+                    example: 1
+
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Code is required
+
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid code
+
+        '500':
+          description: Internal Server Error,
+          $ref: '#/components/responses/BadRequest'
+
+  /user/{id}/book_ticket:
+    post:
+      tags: [Bookings]
+      summary: Book ticket for a specific user
+      description: Checks ticket availability and updates remaining tickets in a transaction.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_id:
+                  type: integer
+                  example: 2
+              required: [event_id]
+      responses:
+        '201':
+          description: Ticket booked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingSuccess'
+
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: No tickets available
+
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Event not found
+
+        '500':
+          description: Internal Server Error,
+          $ref: '#/components/responses/BadRequest'
+
+  /user/{id}/bookings:
+    get:
+      tags: [Bookings]
+      summary: Get all bookings for a specific user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: User ID
+      responses:
+        '200':
+          description: User bookings fetched successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+        '500':
+          description: Internal Server Error,
+          $ref: '#/components/responses/BadRequest'
+
+components:
+  schemas:
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Node.js Meetup
+        description:
+          type: string
+          example: NULL
+        date:
+          type: string
+          format: date
+          example: 2026-04-10
+        total_capacity:
+          type: integer
+          example: 100
+        remaining_tickets:
+          type: integer
+          example: 100
+
+    StoreEventData:
+      type: object
+      required: [title, date, capacity]
+      properties:
+        title:
+          type: string
+          example: Node.js Meetup
+        date:
+          type: string
+          format: date
+        capacity:
+          type: integer
+          example: 100
+
+    BookingSuccess:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Ticket booked successfully"
+        code:
+          type: string
+          example: "ABC123XYZ"
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 1
+        event_id:
+          type: integer
+          example: 1
+        booking_date:
+          type: string
+          format: date
+          example: "2026-03-30"
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Internal Server Error
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
